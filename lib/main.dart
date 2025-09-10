@@ -1,278 +1,233 @@
-// STEP 1: Import Flutter material library and system services
+import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
-// STEP 2: Main function - entry point
 void main() {
-  // Optional: Set default status bar style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // Transparent status bar
-      statusBarIconBrightness: Brightness.dark, // Good for light backgrounds
-    ),
-  );
-
-  runApp(const MyApp());
+  runApp(OutingzApp());
 }
 
-// STEP 3: Root widget of the app
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class OutingzApp extends StatelessWidget {
+  const OutingzApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'OUTINGZ',
+      title: 'Outingz User App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(primarySwatch: Colors.red, fontFamily: 'SF Pro Display'),
-      home: const OnboardingScreen(),
+      theme: ThemeData(
+        textTheme: TextTheme(
+          labelLarge: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+          labelSmall: TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w300,
+            color: Colors.grey[600],
+          ),
+        ),
+      ),
+      home: AuthenticationRootWidget(),
     );
   }
 }
 
-// STEP 4: Onboarding screen (StatefulWidget to track current page)
-class OnboardingScreen extends StatefulWidget {
-  const OnboardingScreen({super.key});
+// App color scheme
+class AppColors {
+  static const MaterialColor red = MaterialColor(0xFFE53E3E, <int, Color>{
+    200: Color(0xFFFC8181),
+    700: Color(0xFFB83736),
+  });
 
-  @override
-  State<OnboardingScreen> createState() => _OnboardingScreenState();
+  static const MaterialColor grey = MaterialColor(0xFF718096, <int, Color>{
+    20: Color(0xFFF9F9F9),
+  });
+
+  static const Color white = Colors.white;
 }
 
-// STEP 5: Onboarding screen state
-class _OnboardingScreenState extends State<OnboardingScreen> {
-  PageController pageController = PageController();
-  int currentIndex = 0;
+// Asset paths
+class AssetResources {
+  static const String ONBOARDING_1 = 'assets/images/onboarding_1.png';
+  static const String ONBOARDING_2 = 'assets/images/onboarding_2.png';
+  static const String ONBOARDING_3 = 'assets/images/onboarding_3.png';
+  static const String LOGO = 'assets/images/logo.png';
+}
 
-  // STEP 6: Onboarding pages data
-  final List<OnboardingData> onboardingPages = [
-    OnboardingData(
-      title: "Stress free event booking",
-      description:
-          "Your key to hassle-free ticket booking to the hottest events in town",
-      imagePath: "assets/images/onboarding_1.png",
-      backgroundColor: const Color(0xFFF5F5DC),
-    ),
-    OnboardingData(
-      title: "Fast payment and easy ticketing",
-      description:
-          "Your key to hassle-free ticket booking to the hottest events in town",
-      imagePath: "assets/images/onboarding_2.png",
-      backgroundColor: const Color(0xFFFF8C00),
-    ),
-    OnboardingData(
-      title: "Find your favourite shows",
-      description:
-          "Your key to hassle-free ticket booking to the hottest events in town",
-      imagePath: "assets/images/onboarding_3.png",
-      backgroundColor: const Color(0xFFF5F5DC),
-    ),
+class AuthenticationRootWidget extends StatefulWidget {
+  const AuthenticationRootWidget({Key? key}) : super(key: key);
+
+  @override
+  State<AuthenticationRootWidget> createState() =>
+      _AuthenticationRootWidgetState();
+}
+
+class _AuthenticationRootWidgetState extends State<AuthenticationRootWidget> {
+  // Current slide index
+  int _currentIndex = 0;
+  final PageController _pageController = PageController();
+
+  // Onboarding content
+  final List<String> _title = [
+    "Stress free event booking",
+    "Fast payment and easy ticketing",
+    "Find your favourite shows",
   ];
 
-  // STEP 7: Build method
+  final List<String> _texts = [
+    "Your key to hassle-free ticket booking to the hottest events in town",
+  ];
+
+  final List<String> images = [
+    AssetResources.ONBOARDING_1,
+    AssetResources.ONBOARDING_2,
+    AssetResources.ONBOARDING_3,
+  ];
+
+  Timer? _timer;
+
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
-        children: [
-          // LAYER 1: Swipeable pages
-          PageView.builder(
-            controller: pageController,
-            onPageChanged: (index) {
-              setState(() {
-                currentIndex = index;
-              });
-            },
-            itemCount: onboardingPages.length,
-            itemBuilder: (context, index) {
-              return OnboardingPage(data: onboardingPages[index]);
-            },
-          ),
-
-          // LAYER 2: Progress dots
-          Positioned(
-            bottom: 120,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                onboardingPages.length,
-                (index) => AnimatedContainer(
-                  duration: const Duration(milliseconds: 300),
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  height: 8,
-                  width: currentIndex == index ? 24 : 8,
-                  decoration: BoxDecoration(
-                    color: currentIndex == index
-                        ? const Color(0xFFD32F2F)
-                        : Colors.grey.withOpacity(0.5),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // LAYER 3: Next/Get Started button
-          Positioned(
-            bottom: 50,
-            left: 40,
-            right: 40,
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () {
-                  if (currentIndex == onboardingPages.length - 1) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Welcome to OUTINGZ!')),
-                    );
-                  } else {
-                    pageController.nextPage(
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD32F2F),
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  currentIndex == onboardingPages.length - 1
-                      ? 'Get Started'
-                      : 'Next',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  void initState() {
+    _startTimer();
+    super.initState();
   }
-}
 
-// STEP 8: Individual onboarding page
-class OnboardingPage extends StatelessWidget {
-  final OnboardingData data;
-  const OnboardingPage({super.key, required this.data});
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  // Start auto-progression timer
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 3), (_) {
+      setState(() {
+        // Cycle through slides every 3 seconds
+        _currentIndex = (_currentIndex + 1) % _title.length;
+        _pageController.jumpToPage(_currentIndex);
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // STEP 8a: Dynamically adjust real status bar icons based on background brightness
-    final brightness = data.backgroundColor.computeLuminance() > 0.5
-        ? Brightness.dark
-        : Brightness.light;
-    SystemChrome.setSystemUIOverlayStyle(
-      SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: brightness,
-      ),
-    );
+    // Get screen dimensions for responsive design
+    final sh = MediaQuery.of(context).size.height;
+    final sw = MediaQuery.of(context).size.width;
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        gradient: data.backgroundColor == const Color(0xFFFF8C00)
-            ? const LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [Color(0xFFFF8C00), Color(0xFFFFD700)],
-              )
-            : null,
-        color: data.backgroundColor == const Color(0xFFFF8C00)
-            ? null
-            : data.backgroundColor,
-      ),
-      child: SafeArea(
-        child: Column(
+    return Scaffold(
+      body: SizedBox(
+        height: sh,
+        child: Stack(
           children: [
-            // STEP 8b: OUTINGZ logo overlay
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'OUTINGZ',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  letterSpacing: 3,
-                  shadows: [
-                    Shadow(
-                      color: Colors.black.withOpacity(0.3),
-                      offset: const Offset(0, 2),
-                      blurRadius: 4,
+            // Background image container
+            Container(
+              height: 0.6 * sh,
+              width: double.infinity,
+              color: AppColors.grey[20],
+              child: PageView(
+                controller: _pageController,
+                onPageChanged: (value) {
+                  setState(() {
+                    _currentIndex = value;
+                  });
+                },
+                children: List.generate(
+                  images.length,
+                  (index) => SizedBox(
+                    height: 0.6 * sh,
+                    width: double.infinity,
+                    child: Image.asset(
+                      images[_currentIndex],
+                      width: sw,
+                      fit: BoxFit.cover,
                     ),
-                  ],
-                ),
-              ),
-            ),
-
-            // STEP 8c: Image section
-            Expanded(
-              flex: 3,
-              child: Container(
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(20),
-                  color: Colors.grey[300],
-                  image: DecorationImage(
-                    image: AssetImage(data.imagePath),
-                    fit: BoxFit.cover,
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(height: 30),
-
-            // STEP 8d: Content card
-            Expanded(
-              flex: 2,
+            // Content card overlay
+            Positioned(
+              top: 0.52 * sh,
               child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(32),
+                padding: EdgeInsets.only(
+                  left: 20,
+                  right: 20,
+                  top: 20,
+                  bottom: 40,
+                ),
+                margin: EdgeInsets.symmetric(horizontal: 22),
+                width: 0.9 * sw,
                 decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(8),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      blurRadius: 10,
+                      offset: const Offset(0, 2),
+                      color: const Color(0xFF909090).withAlpha(51),
                     ),
                   ],
                 ),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    // Dynamic title based on current slide
                     Text(
-                      data.title,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                        height: 1.2,
+                      _title[_currentIndex],
+                      style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    SizedBox(height: 8),
+                    // Description text
                     Text(
-                      data.description,
+                      _texts[0],
+                      style: Theme.of(context).textTheme.labelSmall!.copyWith(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w300,
+                      ),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.grey[600],
-                        height: 1.5,
+                    ),
+                    SizedBox(height: 16),
+                    // Action button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          print('Navigating to login...');
+                          print('Setting user first time to true');
+
+                          // Navigation logic would go here
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                _currentIndex == 2
+                                    ? 'Get Started! (would go to login)'
+                                    : 'Next! (would go to login)',
+                              ),
+                              backgroundColor: AppColors.red[700],
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.red[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        child: Text(
+                          // Button text changes on last slide
+                          _currentIndex == 2 ? 'Get Started' : 'Next',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -280,25 +235,46 @@ class OnboardingPage extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 120),
+            // App logo at top
+            Align(
+              alignment: Alignment.topCenter,
+              child: SafeArea(
+                child: Container(
+                  margin: EdgeInsets.only(top: Platform.isIOS ? 0 : 20),
+                  height: 100,
+                  width: 150,
+                  child: Image.asset(AssetResources.LOGO),
+                ),
+              ),
+            ),
+
+            // Page indicators at bottom
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 100),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(
+                    3,
+                    (index) => Container(
+                      margin: EdgeInsets.only(right: 4),
+                      height: 6,
+                      width: index == _currentIndex ? 40.0 : 20.0,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(40),
+                        color: index == _currentIndex
+                            ? AppColors.red[700]
+                            : AppColors.red[200],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
-
-// STEP 9: Onboarding data model
-class OnboardingData {
-  final String title;
-  final String description;
-  final String imagePath;
-  final Color backgroundColor;
-
-  OnboardingData({
-    required this.title,
-    required this.description,
-    required this.imagePath,
-    required this.backgroundColor,
-  });
 }
